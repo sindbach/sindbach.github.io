@@ -23,7 +23,7 @@
 
         <header>
           <h1>MongoDB: Shard existing collection</h1>
-          <h2>Simple Calculator</h2>
+          <h2>Calculator</h2>
         </header>
 
         <hr>
@@ -31,7 +31,7 @@
 
             <div>
             <h3>Calculation formula: </h3>
-            <h4>( Maximum BSON Document Size / Shard Key Size ) * Chunk Size = Maximum Collection Size </h4>
+            <h4>( Maximum BSON Document Size / Shard Key Size ) * Chunk Size / 2 = Maximum Collection Size </h4>
             </div>
             </br><hr>
             <div id="js-shardkey-update-value">
@@ -39,7 +39,7 @@
             <h4>Size in Kb </h4>
             <input type="range" min="1" max="512" value="100" data-rangeslider> 
             <output></output> 
-            <input type="number" value="100"><button class="button button--small">Update</button>
+            <input type="number" value="100">
             </div><hr>
 
             <div id="js-chunksize-update-value">
@@ -47,7 +47,7 @@
             <h4>Size in Mb</h4>
             <input type="range" min="1" max="1000" value="64" data-rangeslider> 
             <output></output> 
-            <input type="number" value="64"><button class="button button--small">Update</button>
+            <input type="number" value="64">
             </div><hr>
 
 
@@ -56,7 +56,7 @@
             <h4>Size in Gb</h4>
             <input type="range" min="1" max="31250" value="10240" data-rangeslider> 
             <output></output> 
-            <input type="number" value="10240"><button class="button button--small">Update</button>
+            <input type="number" value="10240">
             </div><hr>
 
         </section>
