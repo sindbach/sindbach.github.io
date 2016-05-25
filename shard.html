@@ -48,6 +48,13 @@
             <h4>( Maximum BSON Document Size / Shard Key Size ) * Chunk Size / 2 = Maximum (Existing) Collection Size </h4>
             </div>
             </br><hr>
+            <div id="js-numshards-update-value">
+            <h3>Total number of shards</h3>
+            <input type="range" min="1" max="50" value="4" id="slider_num_shards" data-rangeslider> 
+            <output></output> 
+            <input type="number" value="4" id="box_num_shards">
+            </div><hr>
+
             <div id="js-shardkey-update-value">
             <h3>Shard Key Size </h3>
             <h4>Size in Bytes </h4>
@@ -68,15 +75,25 @@
             <div id="js-maxcoll-update-value">
             <h3>Maximum (Existing) Collection Size </h3>
             <h4>Size in GBytes</h4>
-            <input type="range" min="1" max="31250" value="10240" id="slider_max_coll" data-rangeslider> 
+            <input type="range" min="1" max="8192" value="16" id="slider_max_coll" data-rangeslider> 
             <output></output> 
-            <input type="number" value="10240" id="box_max_coll">
+            <input type="number" value="16" id="box_max_coll">
             </div><hr>
 
-            <div class="radarChart"></div>
+            <div id="radarChart" class="radarChart"></div>
 
             <script src="javascripts/radarChart.js"></script>   
             <script>
+
+                var NUMSHARDS = 5;
+                var LIMIT_A = 8192 * NUMSHARDS;
+                var LIMIT_B = 1000000;
+                var MEGA = 1000000;
+                var GIGA = 1000000000;
+                var DOC_SIZE = 16 * MEGA;
+                var KEY_SHARDKEY = "ShardKey Bytes";
+                var KEY_CHUNKSIZE = "ChunkSize MBytes";
+                var KEY_MAXCOLL = "CollectionSize GBytes";
                 ////////////////////////////////////////////////////////////// 
                 //////////////////////// Set-Up ////////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
@@ -88,16 +105,15 @@
                 ////////////////////////////////////////////////////////////// 
                 ////////////////////////// Data ////////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
-
                 var data = [ [// Layer A
-                              {axis:"ShardKey Bytes", value: 25},
-                              {axis:"ChunkSize MBytes", value: 64},
-                              {axis:"CollectionSize GBytes", value: 16}    
+                              {axis:KEY_SHARDKEY, value: 25},
+                              {axis:KEY_CHUNKSIZE, value: 64},
+                              {axis:KEY_MAXCOLL, value: 16}
                             ]];
+
                 ////////////////////////////////////////////////////////////// 
                 //////////////////// Draw the Chart ////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
-
                 var color = d3.scale.ordinal()
                     .range(["#CC333F","#EDC951","#00A0B0"]);
                     
@@ -111,26 +127,84 @@
                   color: color
                 };
                 //Call function to draw the Radar chart
-                RadarChart(".radarChart", data, radarChartOptions);
+                RadarChart("#radarChart", data, radarChartOptions);
+
+
+                ////////////////////////////////////////////////////////////// 
+                //////////////////// Connect Components //////////////////////
+                ////////////////////////////////////////////////////////////// 
+                function updateSliderAndBox(name, value){
+                    var box_name = "#box_" + name; 
+                    var slider_name = "#slider_" + name;
+                    $(box_name).val(value);
+                    $(slider_name).val(value);
+                }
+                function maximumNumberOfChunks(shard_key){
+                    var numChunks = Math.round(DOC_SIZE/shard_key);
+                    return Math.min(LIMIT_A, LIMIT_B, numChunks);
+                }
+
+                function calculateMaxCollection(shard_key, chunk_size){
+                    var new_max_coll = maximumNumberOfChunks(shard_key) * chunk_size * MEGA / 2 ;
+                    return Math.round(new_max_coll/GIGA);
+                }
+
+                function calculateChunkSize(shard_key, max_coll){
+                    var new_chunk_size = Math.round(2 * max_coll * GIGA / maximumNumberOfChunks(shard_key));
+                    return Math.round(new_chunk_size/MEGA);
+                }
+                function updateChart(shard_key, chunk_size, max_coll){
+                    var data = [[
+                                {axis:KEY_SHARDKEY, value: shard_key * 30},
+                                {axis:KEY_CHUNKSIZE, value: chunk_size * 15},
+                                {axis:KEY_MAXCOLL, value: max_coll } 
+                           ]];
+                    RadarChart("#radarChart", data, radarChartOptions);                    
+                }
+                /* Update input boxes when sliders changes */
+                $('#slider_num_shards').on('input', function() { 
+                    $('#box_num_shards').val($('#slider_num_shards').val()); 
+
+                });
+                $('#slider_shard_key').on('input', function() { 
+                    $('#box_shard_key').val($('#slider_shard_key').val()); 
+                    var new_max_coll = calculateMaxCollection($('#box_shard_key').val(), $('#box_chunk_size').val());
+                    updateSliderAndBox("max_coll", new_max_coll);
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
+                });
+                $('#slider_chunk_size').on('input', function() { 
+                    $('#box_chunk_size').val($('#slider_chunk_size').val()); 
+                    var new_max_coll = calculateMaxCollection($('#box_shard_key').val(), $('#box_chunk_size').val());
+                    updateSliderAndBox("max_coll", new_max_coll);
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
+                });
+                $('#slider_max_coll').on('input', function() { 
+                    $('#box_max_coll').val($('#slider_max_coll').val()); 
+                    var new_chunk_size = calculateChunkSize($('#box_shard_key').val(), $('#box_max_coll').val());
+                    updateSliderAndBox("chunk_size", new_chunk_size);
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
+                });
+
+                /* Update sliders when input boxes changes */
+                $('#box_num_shards').on('input', function() { 
+                    $('#slider_num_shards').val($('#box_num_shards').val()); 
+                });
+                $('#box_shard_key').on('input', function() { 
+                    $('#slider_shard_key').val($('#box_shard_key').val()); 
+                });
+                $('#box_chunk_size').on('input', function() { 
+                    $('#slider_chunk_size').val($('#box_chunk_size').val()); 
+                });
+                $('#box_max_coll').on('input', function() { 
+                    $('#slider_max_coll').val($('#boxmax_coll').val()); 
+                });
+
             </script>
-
         </section>
-
         <footer>
           This page was generated by <a href="https://pages.github.com">GitHub Pages</a>
         </footer>
         <script>
-
-            /* Update input boxes when sliders changes */
-            $('#slider_shard_key').on('input', function() { $('#box_shard_key').val($('#slider_shard_key').val()); });
-            $('#slider_chunk_size').on('input', function() { $('#box_chunk_size').val($('#slider_chunk_size').val()); });
-            $('#slider_max_coll').on('input', function() { $('#box_max_coll').val($('#slider_max_coll').val()); });
-
-            /* Update sliders when input boxes changes */
-            $('#box_shard_key').on('input', function() { $('#slider_shard_key').val($('#box_shard_key').val()); });
-            $('#box_chunk_size').on('input', function() { $('#slider_chunk_size').val($('#box_chunk_size').val()); });
-            $('#box_max_coll').on('input', function() { $('#slider_max_coll').val($('#boxmax_coll').val()); });
-
         </script>
       </div>
     </div>
