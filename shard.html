@@ -8,9 +8,26 @@
     <link rel="stylesheet" type="text/css" href="stylesheets/github-dark.css" media="screen">
     <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print">
     <link rel="stylesheet" type="text/css" href="javascripts/rangeslider.css">
-    <script> 
-        $('input[type="range"]').rangeslider();
-    </script>
+
+    <!-- Google fonts -->
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
+    <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet' type='text/css'>
+
+    <!-- D3.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="javascripts/rangeslider.min.js"></script>
+    <style>
+        .legend {
+            font-family: 'Raleway', sans-serif;
+            fill: #333333;
+        }
+        
+        .tooltip {
+            fill: #333333;
+        }
+    </style>
+
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -20,54 +37,99 @@
   <body>
     <div id="container">
       <div class="inner">
-
         <header>
           <h1>MongoDB: Shard existing collection</h1>
           <h2>Calculator</h2>
         </header>
-
         <hr>
         <section id="main_content">
-
             <div>
             <h3>Calculation formula: </h3>
-            <h4>( Maximum BSON Document Size / Shard Key Size ) * Chunk Size / 2 = Maximum Collection Size </h4>
+            <h4>( Maximum BSON Document Size / Shard Key Size ) * Chunk Size / 2 = Maximum (Existing) Collection Size </h4>
             </div>
             </br><hr>
             <div id="js-shardkey-update-value">
             <h3>Shard Key Size </h3>
-            <h4>Size in Kb </h4>
-            <input type="range" min="1" max="512" value="100" data-rangeslider> 
+            <h4>Size in Bytes </h4>
+            <input type="range" min="1" max="512" value="100" id="slider_shard_key" data-rangeslider> 
             <output></output> 
-            <input type="number" value="100">
+            <input type="number" value="100" id="box_shard_key">
             </div><hr>
 
             <div id="js-chunksize-update-value">
             <h3>Chunk Size </h3>
-            <h4>Size in Mb</h4>
-            <input type="range" min="1" max="1000" value="64" data-rangeslider> 
+            <h4>Size in MBytes</h4>
+            <input type="range" min="1" max="1000" value="64" id="slider_chunk_size" data-rangeslider> 
             <output></output> 
-            <input type="number" value="64">
+            <input type="number" value="64" id="box_chunk_size">
             </div><hr>
 
 
             <div id="js-maxcoll-update-value">
             <h3>Maximum (Existing) Collection Size </h3>
-            <h4>Size in Gb</h4>
-            <input type="range" min="1" max="31250" value="10240" data-rangeslider> 
+            <h4>Size in GBytes</h4>
+            <input type="range" min="1" max="31250" value="10240" id="slider_max_coll" data-rangeslider> 
             <output></output> 
-            <input type="number" value="10240">
+            <input type="number" value="10240" id="box_max_coll">
             </div><hr>
+
+            <div class="radarChart"></div>
+
+            <script src="javascripts/radarChart.js"></script>   
+            <script>
+                ////////////////////////////////////////////////////////////// 
+                //////////////////////// Set-Up ////////////////////////////// 
+                ////////////////////////////////////////////////////////////// 
+
+                var margin = {top: 100, right: 100, bottom: 100, left: 100},
+                    width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
+                    height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+                        
+                ////////////////////////////////////////////////////////////// 
+                ////////////////////////// Data ////////////////////////////// 
+                ////////////////////////////////////////////////////////////// 
+
+                var data = [ [// Layer A
+                              {axis:"ShardKey Bytes", value: 25},
+                              {axis:"ChunkSize MBytes", value: 64},
+                              {axis:"CollectionSize GBytes", value: 16}    
+                            ]];
+                ////////////////////////////////////////////////////////////// 
+                //////////////////// Draw the Chart ////////////////////////// 
+                ////////////////////////////////////////////////////////////// 
+
+                var color = d3.scale.ordinal()
+                    .range(["#CC333F","#EDC951","#00A0B0"]);
+                    
+                var radarChartOptions = {
+                  w: width,
+                  h: height,
+                  margin: margin,
+                  maxValue: 0.5,
+                  levels: 5,
+                  roundStrokes: true,
+                  color: color
+                };
+                //Call function to draw the Radar chart
+                RadarChart(".radarChart", data, radarChartOptions);
+            </script>
 
         </section>
 
         <footer>
           This page was generated by <a href="https://pages.github.com">GitHub Pages</a>
         </footer>
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-        <script src="javascripts/rangeslider.min.js"></script>
         <script>
-            $document.on('click', '#js-shardkey-update-value button', function(e) { var $inputRange = $('[data-rangeslider]', e.target.parentNode); var value = $('input[type="number"]', e.target.parentNode)[0].value; $inputRange .val(value) .change(); }); 
+
+            /* Update input boxes when sliders changes */
+            $('#slider_shard_key').on('input', function() { $('#box_shard_key').val($('#slider_shard_key').val()); });
+            $('#slider_chunk_size').on('input', function() { $('#box_chunk_size').val($('#slider_chunk_size').val()); });
+            $('#slider_max_coll').on('input', function() { $('#box_max_coll').val($('#slider_max_coll').val()); });
+
+            /* Update sliders when input boxes changes */
+            $('#box_shard_key').on('input', function() { $('#slider_shard_key').val($('#box_shard_key').val()); });
+            $('#box_chunk_size').on('input', function() { $('#slider_chunk_size').val($('#box_chunk_size').val()); });
+            $('#box_max_coll').on('input', function() { $('#slider_max_coll').val($('#boxmax_coll').val()); });
 
         </script>
       </div>
