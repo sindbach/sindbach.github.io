@@ -22,7 +22,6 @@
             font-family: 'Raleway', sans-serif;
             fill: #333333;
         }
-        
         .tooltip {
             fill: #333333;
         }
@@ -41,24 +40,27 @@
           <h1>MongoDB: Shard existing collection</h1>
           <h2>Calculator</h2>
         </header>
-        <hr>
         <section id="main_content">
-            <div>
-            <h3>Calculation formula: </h3>
-            <h4>( Maximum BSON Document Size / Shard Key Size ) * Chunk Size / 2 = Maximum (Existing) Collection Size </h4>
+            <div align="right">
+            <h4>MongoDB version: </h4><label>
+                <select width="70" style="width: 70px" id="selectversion">
+                    <option selected> 3.3 </option>
+                    <option> 3.2 </option>
+                </select>
+            </label>
             </div>
-            </br><hr>
             <div id="js-numshards-update-value">
             <h3>Total number of shards</h3>
             <input type="range" min="1" max="50" value="4" id="slider_num_shards" data-rangeslider> 
             <output></output> 
             <input type="number" value="4" id="box_num_shards">
-            </div><hr>
+            <hr>
+            </div>
 
             <div id="js-shardkey-update-value">
             <h3>Shard Key Size </h3>
             <h4>Size in Bytes </h4>
-            <input type="range" min="1" max="512" value="100" id="slider_shard_key" data-rangeslider> 
+            <input type="range" min="8" max="512" value="100" id="slider_shard_key" data-rangeslider> 
             <output></output> 
             <input type="number" value="100" id="box_shard_key">
             </div><hr>
@@ -66,25 +68,31 @@
             <div id="js-chunksize-update-value">
             <h3>Chunk Size </h3>
             <h4>Size in MBytes</h4>
-            <input type="range" min="1" max="1000" value="64" id="slider_chunk_size" data-rangeslider> 
+            <input type="range" min="16" max="1000" step="2" value="64" id="slider_chunk_size" data-rangeslider> 
             <output></output> 
             <input type="number" value="64" id="box_chunk_size">
             </div><hr>
 
-
             <div id="js-maxcoll-update-value">
             <h3>Maximum (Existing) Collection Size </h3>
             <h4>Size in GBytes</h4>
-            <input type="range" min="1" max="8192" value="16" id="slider_max_coll" data-rangeslider> 
+            <input type="range" min="1" max="16384" value="1049" id="slider_max_coll" data-rangeslider> 
             <output></output> 
-            <input type="number" value="16" id="box_max_coll">
+            <input type="number" value="1049" id="box_max_coll">
             </div><hr>
 
+            <div>The chart below represents the functional relationships between the factors above: </div>
             <div id="radarChart" class="radarChart"></div>
+            </br><hr>
+            <div>
+                <h3>Calculation formula: </h3>
+                <h4>Split Points = Maximum BSON Document Size / Shard Key Size </h4>
+                <h4>Max Splits = MIN(1000000, 8192 * Number of Shards, Split Points)</h4> 
+                <h4>Maximum (Existing) Collection Size = Max Splits * Chunk Size / 2 </h4>
+            </div>
 
             <script src="javascripts/radarChart.js"></script>   
             <script>
-
                 var LIMIT_A = 8192;
                 var LIMIT_B = 1000000;
                 var MEGA = 1000000;
@@ -94,6 +102,8 @@
                 var KEY_CHUNKSIZE = "ChunkSize MBytes";
                 var KEY_MAXCOLL = "CollectionSize GBytes";
                 var KEY_NUMSHARDS = "Number of Shards";
+                var V32 = "3.2";
+                var V33 = "3.3";
                 ////////////////////////////////////////////////////////////// 
                 //////////////////////// Set-Up ////////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
@@ -105,13 +115,22 @@
                 ////////////////////////////////////////////////////////////// 
                 ////////////////////////// Data ////////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
-                var data = [ [// Layer A
+                var data = [];
+
+                if ($('#selectversion').val() == V32) {
+                        data.push([
+                              {axis:KEY_MAXCOLL, value: 16},
+                              {axis:KEY_CHUNKSIZE, value: 960},
+                              {axis:KEY_SHARDKEY, value: 3000}                            
+                              ]);
+                }else{
+                        data.push([
                               {axis:KEY_MAXCOLL, value: 16},
                               {axis:KEY_CHUNKSIZE, value: 960},
                               {axis:KEY_SHARDKEY, value: 3000}, 
                               {axis:KEY_NUMSHARDS, value: 400}
-                            ]];
-
+                            ]);
+                }
                 ////////////////////////////////////////////////////////////// 
                 //////////////////// Draw the Chart ////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
@@ -130,7 +149,6 @@
                 //Call function to draw the Radar chart
                 RadarChart("#radarChart", data, radarChartOptions);
 
-
                 ////////////////////////////////////////////////////////////// 
                 //////////////////// Connect Components //////////////////////
                 ////////////////////////////////////////////////////////////// 
@@ -140,79 +158,128 @@
                     $(box_name).val(value);
                     $(slider_name).val(value);
                 }
-
-                function maximumNumberOfChunks(shard_key, num_shards){
+                function maximumNumberOfChunks(shard_key, num_shards, version){
                     var numChunks = Math.round(DOC_SIZE/shard_key);
-                    return Math.min(LIMIT_A * num_shards, LIMIT_B, numChunks);
+                    if (version == V32) {
+                        limit = Math.min(LIMIT_B, numChunks);
+                    }else{
+                        limit = Math.min(LIMIT_A * num_shards, LIMIT_B, numChunks);
+                    }
+                    console.log("maximum limit min: " + limit);
+                    return limit;
                 }
-
-                function calculateMaxCollection(shard_key, chunk_size, num_shards){
-                    var new_max_coll = maximumNumberOfChunks(shard_key, num_shards) * chunk_size * MEGA / 2 ;
+                function calculateMaxCollection(shard_key, chunk_size, num_shards, version){
+                    var new_max_coll = maximumNumberOfChunks(shard_key, num_shards, version) * chunk_size * MEGA / 2 ;
                     return Math.round(new_max_coll/GIGA);
                 }
-
-                function calculateChunkSize(shard_key, max_coll, num_shards){
-                    var new_chunk_size = Math.round(2 * max_coll * GIGA / maximumNumberOfChunks(shard_key, num_shards));
+                function calculateChunkSize(shard_key, max_coll, num_shards, version){
+                    var new_chunk_size = Math.round(2 * max_coll * GIGA / maximumNumberOfChunks(shard_key, num_shards, version));
                     return Math.round(new_chunk_size/MEGA);
                 }
-
-                function updateChart(shard_key, chunk_size, max_coll, num_shards){
-                    var data = [[
+                function updateChart(shard_key, chunk_size, max_coll, num_shards, version){
+                    var data = [];
+                    if (version == V32){
+                        data.push([
+                                {axis:KEY_MAXCOLL, value: max_coll },
+                                {axis:KEY_CHUNKSIZE, value: chunk_size * 15},
+                                {axis:KEY_SHARDKEY, value: shard_key * 30 },
+                           ]);
+                    }
+                    else{
+                        data.push([
                                 {axis:KEY_MAXCOLL, value: max_coll },
                                 {axis:KEY_CHUNKSIZE, value: chunk_size * 15},
                                 {axis:KEY_SHARDKEY, value: shard_key * 30 },
                                 {axis:KEY_NUMSHARDS, value: num_shards * 100}
-                           ]];
+                           ]);
+                    }
                     RadarChart("#radarChart", data, radarChartOptions);                    
                 }
+                function changeMaxCollection(shard_key, chunk_size, num_shards, version){
+                    var new_max_coll = calculateMaxCollection(shard_key, chunk_size, num_shards, version);
+                    updateSliderAndBox("max_coll", new_max_coll);  
+                }
+                function changeChunkSize(shard_key, max_coll, num_shards, version){
+                    var new_chunk_size = calculateChunkSize(shard_key, max_coll, num_shards, version);
+                    updateSliderAndBox("chunk_size", new_chunk_size);
+                }
+                /* Toggle MongoDB version */
+                $('#selectversion').change(function(){
+                    if ($('#selectversion').val() == V32) {
+                        $('#js-numshards-update-value').hide();
+                    }else{
+                        $('#js-numshards-update-value').show();
+                    }
+                    updateChart($('#box_shard_key').val(), 
+                                $('#box_chunk_size').val(), 
+                                $('#box_max_coll').val(), 
+                                $('#box_num_shards').val(), 
+                                $('#selectversion').val());
+                });
                 /* Update input boxes when sliders changes */
                 $('#slider_num_shards').on('input', function() { 
                     $('#box_num_shards').val($('#slider_num_shards').val()); 
-                    var new_max_coll = calculateMaxCollection($('#box_shard_key').val(), 
-                                                              $('#box_chunk_size').val(), 
-                                                              $('#box_num_shards').val());
-                    updateSliderAndBox("max_coll", new_max_coll);
-                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val());
+                    changeMaxCollection($('#box_shard_key').val(), 
+                                        $('#box_chunk_size').val(), 
+                                        $('#box_num_shards').val(), 
+                                        $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), 
+                                $('#box_chunk_size').val(), 
+                                $('#box_max_coll').val(), 
+                                $('#box_num_shards').val(), 
+                                $('#selectversion').val());
                 });
                 $('#slider_shard_key').on('input', function() { 
                     $('#box_shard_key').val($('#slider_shard_key').val()); 
-                    var new_max_coll = calculateMaxCollection($('#box_shard_key').val(), 
-                                                              $('#box_chunk_size').val(), 
-                                                              $('#box_num_shards').val());
-                    updateSliderAndBox("max_coll", new_max_coll);
-                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val());
+                    changeMaxCollection($('#box_shard_key').val(), 
+                                        $('#box_chunk_size').val(), 
+                                        $('#box_num_shards').val(), 
+                                        $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), 
+                                $('#box_chunk_size').val(), 
+                                $('#box_max_coll').val(), 
+                                $('#box_num_shards').val(), 
+                                $('#selectversion').val());
                 });
                 $('#slider_chunk_size').on('input', function() { 
                     $('#box_chunk_size').val($('#slider_chunk_size').val()); 
-                    var new_max_coll = calculateMaxCollection($('#box_shard_key').val(), 
-                                                              $('#box_chunk_size').val(),
-                                                              $('#box_num_shards').val());
-                    updateSliderAndBox("max_coll", new_max_coll);
-                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val());
+                    changeMaxCollection($('#box_shard_key').val(), 
+                                        $('#box_chunk_size').val(), 
+                                        $('#box_num_shards').val(), 
+                                        $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), 
+                                $('#box_chunk_size').val(), 
+                                $('#box_max_coll').val(), 
+                                $('#box_num_shards').val(), 
+                                $('#selectversion').val());
                 });
                 $('#slider_max_coll').on('input', function() { 
                     $('#box_max_coll').val($('#slider_max_coll').val()); 
-                    var new_chunk_size = calculateChunkSize($('#box_shard_key').val(), 
-                                                            $('#box_max_coll').val(),
-                                                            $('#box_num_shards').val());
-                    updateSliderAndBox("chunk_size", new_chunk_size);
-                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val());
+                    changeChunkSize($('#box_shard_key').val(), $('#box_max_coll').val(), $('#box_num_shards').val(), $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val(), $('#selectversion').val());
                 });
 
                 /* Update sliders when input boxes changes */
                 $('#box_num_shards').on('input', function() { 
                     $('#slider_num_shards').val($('#box_num_shards').val()); 
+                    changeMaxCollection($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_num_shards').val(), $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val(), $('#selectversion').val());
                 });
                 $('#box_shard_key').on('input', function() { 
                     $('#slider_shard_key').val($('#box_shard_key').val()); 
+                    changeMaxCollection($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_num_shards').val(), $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val(), $('#selectversion').val());
                 });
                 $('#box_chunk_size').on('input', function() { 
-                    $('#slider_chunk_size').val($('#box_chunk_size').val()); 
+                    $('#slider_chunk_size').val($('#box_chunk_size').val());
+                    changeMaxCollection($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_num_shards').val(), $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val(), $('#selectversion').val());
                 });
                 $('#box_max_coll').on('input', function() { 
                     $('#slider_max_coll').val($('#boxmax_coll').val()); 
+                    changeChunkSize($('#box_shard_key').val(), $('#box_max_coll').val(), $('#box_num_shards').val(), $('#selectversion').val());
+                    updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val(),$('#selectversion').val());
                 });
-
             </script>
         </section>
         <footer>
