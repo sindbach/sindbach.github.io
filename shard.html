@@ -14,7 +14,7 @@
     <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet' type='text/css'>
 
     <!-- D3.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.6/d3.min.js" charset="utf-8"></script>
+    <script src="javascripts/d3.min.js" charset="utf-8"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="javascripts/rangeslider.min.js"></script>
     <style>
@@ -39,6 +39,7 @@
         <header>
           <h1>MongoDB: Shard existing collection</h1>
           <h2>Calculator</h2>
+          Enter in the size of the existing non-sharding collection to shard to find out the chunk size, number of shards and shard key to configure. 
         </header>
         <section id="main_content">
             <div align="right">
@@ -49,13 +50,14 @@
                 </select>
             </label>
             </div>
-            <div id="js-numshards-update-value">
-            <h3>Total number of shards</h3>
-            <input type="range" min="1" max="50" value="4" id="slider_num_shards" data-rangeslider> 
+
+            <div id="js-maxcoll-update-value">
+            <h3>Maximum (Existing) Collection Size </h3>
+            <h4>Size in GBytes</h4>
+            <input type="range" min="1" max="16384" value="1049" id="slider_max_coll" data-rangeslider> 
             <output></output> 
-            <input type="number" value="4" id="box_num_shards">
-            <hr>
-            </div>
+            <input type="number" value="1049" id="box_max_coll">
+            </div><hr>
 
             <div id="js-shardkey-update-value">
             <h3>Shard Key Size </h3>
@@ -73,15 +75,15 @@
             <input type="number" value="64" id="box_chunk_size">
             </div><hr>
 
-            <div id="js-maxcoll-update-value">
-            <h3>Maximum (Existing) Collection Size </h3>
-            <h4>Size in GBytes</h4>
-            <input type="range" min="1" max="16384" value="1049" id="slider_max_coll" data-rangeslider> 
+            <div id="js-numshards-update-value">
+            <h3>Total number of shards</h3>
+            <input type="range" min="1" max="50" value="4" id="slider_num_shards" data-rangeslider> 
             <output></output> 
-            <input type="number" value="1049" id="box_max_coll">
-            </div><hr>
+            <input type="number" value="4" id="box_num_shards">
+            <hr>
+            </div>
 
-            <div>The chart below represents the functional relationships between the factors above: </div>
+            <div>The chart below represents the functional relationships between the features above: </div>
             <div id="radarChart" class="radarChart"></div>
             </br><hr>
             <div>
@@ -104,54 +106,11 @@
                 var KEY_NUMSHARDS = "Number of Shards";
                 var V32 = "3.2";
                 var V33 = "3.3";
-                ////////////////////////////////////////////////////////////// 
-                //////////////////////// Set-Up ////////////////////////////// 
-                ////////////////////////////////////////////////////////////// 
+                var SCALE_MAXCOLL = 1;
+                var SCALE_CHUNKSIZE = 15;
+                var SCALE_SHARDKEY = 30;
+                var SCALE_NUMSHARDS = 300;
 
-                var margin = {top: 100, right: 100, bottom: 100, left: 100},
-                    width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
-                    height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
-                        
-                ////////////////////////////////////////////////////////////// 
-                ////////////////////////// Data ////////////////////////////// 
-                ////////////////////////////////////////////////////////////// 
-                var data = [];
-
-                if ($('#selectversion').val() == V32) {
-                        data.push([
-                              {axis:KEY_MAXCOLL, value: 16},
-                              {axis:KEY_CHUNKSIZE, value: 960},
-                              {axis:KEY_SHARDKEY, value: 3000}                            
-                              ]);
-                }else{
-                        data.push([
-                              {axis:KEY_MAXCOLL, value: 16},
-                              {axis:KEY_CHUNKSIZE, value: 960},
-                              {axis:KEY_SHARDKEY, value: 3000}, 
-                              {axis:KEY_NUMSHARDS, value: 400}
-                            ]);
-                }
-                ////////////////////////////////////////////////////////////// 
-                //////////////////// Draw the Chart ////////////////////////// 
-                ////////////////////////////////////////////////////////////// 
-                var color = d3.scale.ordinal()
-                    .range(["#CC333F","#EDC951","#00A0B0"]);
-                    
-                var radarChartOptions = {
-                  w: width,
-                  h: height,
-                  margin: margin,
-                  maxValue: 0.5,
-                  levels: 10,
-                  roundStrokes: true,
-                  color: color
-                };
-                //Call function to draw the Radar chart
-                RadarChart("#radarChart", data, radarChartOptions);
-
-                ////////////////////////////////////////////////////////////// 
-                //////////////////// Connect Components //////////////////////
-                ////////////////////////////////////////////////////////////// 
                 function updateSliderAndBox(name, value){
                     var box_name = "#box_" + name; 
                     var slider_name = "#slider_" + name;
@@ -180,29 +139,85 @@
                     var data = [];
                     if (version == V32){
                         data.push([
-                                {axis:KEY_MAXCOLL, value: max_coll },
-                                {axis:KEY_CHUNKSIZE, value: chunk_size * 15},
-                                {axis:KEY_SHARDKEY, value: shard_key * 30 },
+                                {axis:KEY_MAXCOLL, value: max_coll * SCALE_MAXCOLL},
+                                {axis:KEY_CHUNKSIZE, value: chunk_size * SCALE_CHUNKSIZE},
+                                {axis:KEY_SHARDKEY, value: shard_key * SCALE_SHARDKEY},
                            ]);
                     }
                     else{
                         data.push([
-                                {axis:KEY_MAXCOLL, value: max_coll },
-                                {axis:KEY_CHUNKSIZE, value: chunk_size * 15},
-                                {axis:KEY_SHARDKEY, value: shard_key * 30 },
-                                {axis:KEY_NUMSHARDS, value: num_shards * 100}
+                                {axis:KEY_MAXCOLL, value: max_coll * SCALE_MAXCOLL},
+                                {axis:KEY_CHUNKSIZE, value: chunk_size * SCALE_CHUNKSIZE },
+                                {axis:KEY_SHARDKEY, value: shard_key * SCALE_SHARDKEY },
+                                {axis:KEY_NUMSHARDS, value: num_shards * SCALE_NUMSHARDS }
                            ]);
                     }
                     RadarChart("#radarChart", data, radarChartOptions);                    
                 }
                 function changeMaxCollection(shard_key, chunk_size, num_shards, version){
                     var new_max_coll = calculateMaxCollection(shard_key, chunk_size, num_shards, version);
-                    updateSliderAndBox("max_coll", new_max_coll);  
+                    updateSliderAndBox("max_coll", new_max_coll); 
                 }
                 function changeChunkSize(shard_key, max_coll, num_shards, version){
                     var new_chunk_size = calculateChunkSize(shard_key, max_coll, num_shards, version);
                     updateSliderAndBox("chunk_size", new_chunk_size);
                 }
+
+                ////////////////////////////////////////////////////////////// 
+                //////////////////////// Set-Up ////////////////////////////// 
+                ////////////////////////////////////////////////////////////// 
+
+                var margin = {top: 100, right: 100, bottom: 100, left: 100},
+                    width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
+                    height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
+                        
+                ////////////////////////////////////////////////////////////// 
+                ////////////////////////// Data ////////////////////////////// 
+                ////////////////////////////////////////////////////////////// 
+                var data = [];
+
+                
+                /*if ($('#selectversion').val() == V32) {
+                    data.push([
+                              {axis:KEY_MAXCOLL, value: 1049 * SCALE_MAXCOLL},
+                              {axis:KEY_CHUNKSIZE, value: },
+                              {axis:KEY_SHARDKEY, value: 3000}                            
+                    ]);
+                }else{
+                    data.push([
+                              {axis:KEY_MAXCOLL, value: 1049},
+                              {axis:KEY_CHUNKSIZE, value: 960},
+                              {axis:KEY_SHARDKEY, value: 3000}, 
+                              {axis:KEY_NUMSHARDS, value: 1200}
+                    ]);
+                }*/
+                ////////////////////////////////////////////////////////////// 
+                //////////////////// Draw the Chart ////////////////////////// 
+                ////////////////////////////////////////////////////////////// 
+                var color = d3.scale.ordinal()
+                    .range(["#CC333F","#EDC951","#00A0B0"]);
+                    
+                var radarChartOptions = {
+                  w: width,
+                  h: height,
+                  margin: margin,
+                  maxValue: 0.5,
+                  levels: 10,
+                  roundStrokes: true,
+                  color: color
+                };
+
+                updateChart($('#box_shard_key').val(), 
+                            $('#box_chunk_size').val(), 
+                            $('#box_max_coll').val(), 
+                            $('#box_num_shards').val(), 
+                            $('#selectversion').val());
+
+                //Call function to draw the Radar chart
+                //RadarChart("#radarChart", data, radarChartOptions);
+
+                ////////////////////////////////////////////////////////////// 
+                //////////////////// Connect Components //////////////////////
                 /* Toggle MongoDB version */
                 $('#selectversion').change(function(){
                     if ($('#selectversion').val() == V32) {
