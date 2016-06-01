@@ -166,34 +166,14 @@
                 ////////////////////////////////////////////////////////////// 
                 //////////////////////// Set-Up ////////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
-
                 var margin = {top: 100, right: 100, bottom: 100, left: 100},
                     width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
                     height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
                         
                 ////////////////////////////////////////////////////////////// 
-                ////////////////////////// Data ////////////////////////////// 
-                ////////////////////////////////////////////////////////////// 
-                var data = [];
-
-                
-                /*if ($('#selectversion').val() == V32) {
-                    data.push([
-                              {axis:KEY_MAXCOLL, value: 1049 * SCALE_MAXCOLL},
-                              {axis:KEY_CHUNKSIZE, value: },
-                              {axis:KEY_SHARDKEY, value: 3000}                            
-                    ]);
-                }else{
-                    data.push([
-                              {axis:KEY_MAXCOLL, value: 1049},
-                              {axis:KEY_CHUNKSIZE, value: 960},
-                              {axis:KEY_SHARDKEY, value: 3000}, 
-                              {axis:KEY_NUMSHARDS, value: 1200}
-                    ]);
-                }*/
-                ////////////////////////////////////////////////////////////// 
                 //////////////////// Draw the Chart ////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
+                var data = [];
                 var color = d3.scale.ordinal()
                     .range(["#CC333F","#EDC951","#00A0B0"]);
                     
