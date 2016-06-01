@@ -17,6 +17,23 @@
     <script src="javascripts/d3.min.js" charset="utf-8"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="javascripts/rangeslider.min.js"></script>
+    <script> 
+        var LIMIT_A = 8192;
+        var LIMIT_B = 1000000;
+        var MEGA = 1000000;
+        var GIGA = 1000000000;
+        var DOC_SIZE = 16 * MEGA;
+        var KEY_SHARDKEY = "ShardKey Bytes";
+        var KEY_CHUNKSIZE = "ChunkSize MBytes";
+        var KEY_MAXCOLL = "CollectionSize GBytes";
+        var KEY_NUMSHARDS = "Number of Shards";
+        var V32 = "3.2";
+        var V33 = "3.3";
+        var SCALE_MAXCOLL = 1;
+        var SCALE_CHUNKSIZE = 15;
+        var SCALE_SHARDKEY = 30;
+        var SCALE_NUMSHARDS = 300;
+    </script>
     <style>
         .legend {
             font-family: 'Raleway', sans-serif;
@@ -38,13 +55,13 @@
       <div class="inner">
         <header>
           <h1>MongoDB: Shard existing collection</h1>
-          <h2>Calculator</h2>
-          Enter in the size of the existing non-sharding collection to shard to find out the chunk size, number of shards and shard key to configure. 
+          <h2>Estimator</h2>
+          Enter in the size of the existing un-sharded collection and desirable shard-key to find out supported the chunk size and number of shards to configure. If the resulting chunk size value is less than the default (64MB) there is no need to lower the chunk size value. 
         </header>
         <section id="main_content">
             <div align="right">
             <h4>MongoDB version: </h4><label>
-                <select width="70" style="width: 70px" id="selectversion">
+                <select width="70" style="width: 70px" id="selectversion" name="selectversion">
                     <option selected> 3.3 </option>
                     <option> 3.2 </option>
                 </select>
@@ -54,22 +71,22 @@
             <div id="js-maxcoll-update-value">
             <h3>Maximum (Existing) Collection Size </h3>
             <h4>Size in GBytes</h4>
-            <input type="range" min="1" max="16384" value="1049" id="slider_max_coll" data-rangeslider> 
+            <input type="range" min="1" max="16384" value="2560" id="slider_max_coll" data-rangeslider> 
             <output></output> 
-            <input type="number" value="1049" id="box_max_coll">
+            <input type="number" value="2560" id="box_max_coll">
             </div><hr>
 
             <div id="js-shardkey-update-value">
             <h3>Shard Key Size </h3>
             <h4>Size in Bytes </h4>
-            <input type="range" min="8" max="512" value="100" id="slider_shard_key" data-rangeslider> 
+            <input type="range" min="8" max="512" value="200" id="slider_shard_key" data-rangeslider> 
             <output></output> 
-            <input type="number" value="100" id="box_shard_key">
+            <input type="number" value="200" id="box_shard_key">
             </div><hr>
 
             <div id="js-chunksize-update-value">
             <h3>Chunk Size </h3>
-            <h4>Size in MBytes</h4>
+            <h4>Size in MBytes</h4> 
             <input type="range" min="16" max="1000" step="2" value="64" id="slider_chunk_size" data-rangeslider> 
             <output></output> 
             <input type="number" value="64" id="box_chunk_size">
@@ -77,9 +94,9 @@
 
             <div id="js-numshards-update-value">
             <h3>Total number of shards</h3>
-            <input type="range" min="1" max="50" value="4" id="slider_num_shards" data-rangeslider> 
+            <input type="range" min="1" max="50" value="2" id="slider_num_shards" data-rangeslider> 
             <output></output> 
-            <input type="number" value="4" id="box_num_shards">
+            <input type="number" value="2" id="box_num_shards">
             <hr>
             </div>
 
@@ -87,7 +104,7 @@
             <div id="radarChart" class="radarChart"></div>
             </br><hr>
             <div>
-                <h3>Calculation formula: </h3>
+                <h3>Estimation formula: </h3>
                 <h4>Split Points = Maximum BSON Document Size / Shard Key Size </h4>
                 <h4>Max Splits = MIN(1000000, 8192 * Number of Shards, Split Points)</h4> 
                 <h4>Maximum (Existing) Collection Size = Max Splits * Chunk Size / 2 </h4>
@@ -95,22 +112,10 @@
 
             <script src="javascripts/radarChart.js"></script>   
             <script>
-                var LIMIT_A = 8192;
-                var LIMIT_B = 1000000;
-                var MEGA = 1000000;
-                var GIGA = 1000000000;
-                var DOC_SIZE = 16 * MEGA;
-                var KEY_SHARDKEY = "ShardKey Bytes";
-                var KEY_CHUNKSIZE = "ChunkSize MBytes";
-                var KEY_MAXCOLL = "CollectionSize GBytes";
-                var KEY_NUMSHARDS = "Number of Shards";
-                var V32 = "3.2";
-                var V33 = "3.3";
-                var SCALE_MAXCOLL = 1;
-                var SCALE_CHUNKSIZE = 15;
-                var SCALE_SHARDKEY = 30;
-                var SCALE_NUMSHARDS = 300;
 
+                ////////////////////////////////////////////////////////////// 
+                //////////////////////// Functions /////////////////////////// 
+                ////////////////////////////////////////////////////////////// 
                 function updateSliderAndBox(name, value){
                     var box_name = "#box_" + name; 
                     var slider_name = "#slider_" + name;
@@ -119,6 +124,7 @@
                 }
                 function maximumNumberOfChunks(shard_key, num_shards, version){
                     var numChunks = Math.round(DOC_SIZE/shard_key);
+                    console.log("num chunks : " + numChunks);
                     if (version == V32) {
                         limit = Math.min(LIMIT_B, numChunks);
                     }else{
@@ -129,6 +135,7 @@
                 }
                 function calculateMaxCollection(shard_key, chunk_size, num_shards, version){
                     var new_max_coll = maximumNumberOfChunks(shard_key, num_shards, version) * chunk_size * MEGA / 2 ;
+                    console.log("maximum collection : " + new_max_coll);
                     return Math.round(new_max_coll/GIGA);
                 }
                 function calculateChunkSize(shard_key, max_coll, num_shards, version){
@@ -162,10 +169,26 @@
                     var new_chunk_size = calculateChunkSize(shard_key, max_coll, num_shards, version);
                     updateSliderAndBox("chunk_size", new_chunk_size);
                 }
+                function changeVersion(version){
+                    if (version == V32) {
+                        $('#js-numshards-update-value').hide();
+                    }else if (version == V33){
+                        $('#js-numshards-update-value').show();
+                    }else{
+                        console.log("Unknown supported version. defaulting to ", V33);
+                        $('#js-numshards-update-value').show();
+                    }
+                    updateChart($('#box_shard_key').val(), 
+                                $('#box_chunk_size').val(), 
+                                $('#box_max_coll').val(), 
+                                $('#box_num_shards').val(), 
+                                $('#selectversion').val());
+                }
 
                 ////////////////////////////////////////////////////////////// 
                 //////////////////////// Set-Up ////////////////////////////// 
                 ////////////////////////////////////////////////////////////// 
+
                 var margin = {top: 100, right: 100, bottom: 100, left: 100},
                     width = Math.min(700, window.innerWidth - 10) - margin.left - margin.right,
                     height = Math.min(width, window.innerHeight - margin.top - margin.bottom - 20);
@@ -200,16 +223,7 @@
                 //////////////////// Connect Components //////////////////////
                 /* Toggle MongoDB version */
                 $('#selectversion').change(function(){
-                    if ($('#selectversion').val() == V32) {
-                        $('#js-numshards-update-value').hide();
-                    }else{
-                        $('#js-numshards-update-value').show();
-                    }
-                    updateChart($('#box_shard_key').val(), 
-                                $('#box_chunk_size').val(), 
-                                $('#box_max_coll').val(), 
-                                $('#box_num_shards').val(), 
-                                $('#selectversion').val());
+                    changeVersion($('#selectversion').val());
                 });
                 /* Update input boxes when sliders changes */
                 $('#slider_num_shards').on('input', function() { 
@@ -275,6 +289,16 @@
                     changeChunkSize($('#box_shard_key').val(), $('#box_max_coll').val(), $('#box_num_shards').val(), $('#selectversion').val());
                     updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val(), $('#box_num_shards').val(),$('#selectversion').val());
                 });
+
+
+                var url_version = window.location.hash.substring(1);
+                if (url_version != V33 && url_version != V32) {
+                    url_version = V33;
+                } 
+                console.log(url_version);
+                $("#selectversion").val(url_version);
+                changeVersion(url_version);
+
             </script>
         </section>
         <footer>
