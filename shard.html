@@ -138,7 +138,7 @@
                     return Math.round(new_chunk_size/MEGA);
                 }
                 function updateChart(shard_key, chunk_size, max_coll){
-                    VIZ_MAXCOLL.data(max_coll).update();
+                    VIZ_MAXCOLL.data(max_coll/1000).update();
                     VIZ_SHARDKEY.data(shard_key).update();
                     VIZ_CHUNKSIZE.data(chunk_size).update(); 
                 }
@@ -171,13 +171,15 @@
                     viz.startAngle(180)                        
                        .endAngle(180)                         
                        .arcThickness(.12)    
-                       .min(0)                     
-                       .max(100)                     
                        .capRadius(1)    
                        .label(function (d,i) {                
                             return d3.format(".2f")(d);
                         });    
                 });
+
+                VIZ_MAXCOLL.min(0).max(250).label(function(d,i){return d3.format("0.3f")(d)+" TB"});
+                VIZ_SHARDKEY.min(0).max(256).label(function(d,i){return d3.format("0f")(d)+" B"});
+                VIZ_CHUNKSIZE.min(0).max(500).label(function(d,i){return d3.format("0f")(d)+" MB"});
 
                 var s = String("800,200").split(",");
                 var divWidth = s[0] * 0.80 / 3;

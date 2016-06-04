@@ -1,0 +1,56 @@
+/*****  DEFAULTS ******/
+
+circle.vz-radial_progress-back-circle {
+    fill:#000;
+    fill-opacity: .001;
+}
+
+.vz-radial_progress-plot {
+    fill:#888;
+    stroke:#777;
+    stroke-opacity:.1;
+}
+
+.vz-radial_progress-track {
+    fill:#DDD;
+    stroke:#CCC;
+    fill-opacity: .1;
+    stroke-opacity: .1;
+}
+
+.vz-radial_progress-back-circle {
+    fill:none;
+    stroke:none;
+}
+
+.vz-radial_progress-label {
+    font-weight:300;
+}
+
+
+/******** NEON **********/
+
+.vz-skin-neon .vz-radial_progress-back-circle {
+    fill: none;
+    fill-opacity: 0;
+}
+
+.vz-skin-neon .vz-radial_progress-track {
+    stroke:#000;
+    stroke-opacity:0;
+}
+
+
+/******** TEST CONTAINER **********/
+
+svg.vizuly {
+    fill:none;
+}
+
+div.radial_container {
+    float:left;
+    position: relative;
+    top: 45%;
+    transform: translateY(-50%);
+}
+
