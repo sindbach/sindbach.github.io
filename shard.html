@@ -10,16 +10,10 @@
     <link rel="stylesheet" type="text/css" href="stylesheets/rangeslider.css">
     <link rel="stylesheet" type="text/css" href="stylesheets/vizuly_radial_progress.css">
 
-
-    <!-- Google fonts -->
-    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,300' rel='stylesheet' type='text/css'>
-    <link href='https://fonts.googleapis.com/css?family=Raleway' rel='stylesheet' type='text/css'>
-
     <!-- D3.js -->
     <script src="javascripts/d3.min.js" charset="utf-8"></script>
     <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
     <script src="javascripts/rangeslider.min.js"></script>
-
     <script src="javascripts/vizuly_core.min.js"></script>
     <script src="javascripts/vizuly_radialprogress.min.js"></script>
     <script> 
@@ -28,14 +22,10 @@
         var MEGA = 1000000;
         var GIGA = 1000000000;
         var DOC_SIZE = 16 * MEGA;
-        var KEY_SHARDKEY = "ShardKey Bytes";
-        var KEY_CHUNKSIZE = "ChunkSize MBytes";
-        var KEY_MAXCOLL = "CollectionSize GBytes";
         var SCALE_MAXCOLL = 1;
         var SCALE_CHUNKSIZE = 15;
         var SCALE_SHARDKEY = 30;
         var VIZ_MAXCOLL, VIZ_SHARDKEY, VIZ_CHUNKSIZE;
-
         $(function() {
             $('[data-rangeslider]').rangeslider({
                 polyfill: false
@@ -43,16 +33,6 @@
         });
 
     </script>
-    <style>
-        .legend {
-            font-family: 'Raleway', sans-serif;
-            fill: #333333;
-        }
-        .tooltip {
-            fill: #333333;
-        }
-    </style>
-
     <!--[if lt IE 9]>
     <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
     <![endif]-->
@@ -221,17 +201,17 @@
 
                 /* Update sliders when input boxes changes */
                 $('#box_shard_key').on('input', function() { 
-                    $('#slider_shard_key').val($('#box_shard_key').val()); 
+                    $('#slider_shard_key').val($('#box_shard_key').val()).rangeslider('update', true); 
                     changeMaxCollection($('#box_shard_key').val(), $('#box_chunk_size').val());
                     updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
                 });
                 $('#box_chunk_size').on('input', function() { 
-                    $('#slider_chunk_size').val($('#box_chunk_size').val());
+                    $('#slider_chunk_size').val($('#box_chunk_size').val()).rangeslider('update', true);
                     changeMaxCollection($('#box_shard_key').val(), $('#box_chunk_size').val());
                     updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
                 });
                 $('#box_max_coll').on('input', function() { 
-                    $('#slider_max_coll').val($('#boxmax_coll').val()); 
+                    $('#slider_max_coll').val($('#boxmax_coll').val()).rangeslider('update', true); 
                     changeChunkSize($('#box_shard_key').val(), $('#box_max_coll').val());
                     updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
                 });
