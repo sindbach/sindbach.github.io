@@ -57,7 +57,7 @@
             <br>
             <input type="range"  min="1" max="500000" value="2560" id="slider_max_coll" data-rangeslider> 
             <br>
-            <input type="number" value="2560" id="box_max_coll">
+            <input type="number" value="2560" id="box_max_coll" min="1" max="500000">
             </div>
             <div id="radial_max_coll" class="right_radial_container" style="float:right"></div>
             </div>
@@ -70,7 +70,7 @@
              <br>
             <input type="range" min="8" max="512" value="200" id="slider_shard_key" data-rangeslider> 
              <br>
-            <input type="number" value="200" id="box_shard_key">
+            <input type="number" value="200" id="box_shard_key" min="1" max="512" >
             </div>
             <div id="radial_shard_key" class="right_radial_container" style="float:right"></div>
             </div><hr>
@@ -82,7 +82,7 @@
              <br>
             <input type="range" min="16" max="1000" step="2" value="64" id="slider_chunk_size" data-rangeslider> 
              <br>
-            <input type="number" value="64" id="box_chunk_size">
+            <input type="number" value="64" id="box_chunk_size" min="1" max="1000">
             </div>
             <div id="radial_chunk_size" class="right_radial_container" style="float:right"></div>
             </div><hr>
@@ -115,7 +115,10 @@
                 }
                 function calculateChunkSize(shard_key, max_coll){
                     var new_chunk_size = Math.round(2 * max_coll * GIGA / maximumNumberOfChunks(shard_key));
-                    return Math.round(new_chunk_size/MEGA);
+                    console.log('max coll: '+max_coll);
+                    console.log('max chunks: ' + maximumNumberOfChunks(shard_key));
+                    console.log('new chunk size: '+new_chunk_size);
+                    return Math.min(1000, Math.round(new_chunk_size/MEGA));
                 }
                 function updateChart(shard_key, chunk_size, max_coll){
                     VIZ_MAXCOLL.data(max_coll/1000).update();
