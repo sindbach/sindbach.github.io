@@ -46,9 +46,21 @@
         <header>
           <h1>MongoDB: Shard existing collection</h1>
           <h2>Estimator</h2>
-          Enter in the size of the existing un-sharded collection and desirable shard-key to find out supported the chunk size to configure. If the resulting chunk size value is less than the default (64MB) there is no need to lower the chunk size value. 
+          Enter in the size of the intended shard-key and existing un-sharded collection to find out supported the chunk size to configure. If the resulting chunk size value is less than the default (64MB) there is no need to lower the chunk size value. 
         </header>
         <section id="main_content">
+
+            <div id="js-shardkey-update-value" style="margin:0px auto; width:100%; height:200px;">
+            <div class="left_slide" style="float:left; width:70%">
+            <h3>Shard Key Size </h3>
+            <h4>Size in Bytes </h4>
+             <br>
+            <input type="range" min="8" max="512" value="200" id="slider_shard_key" data-rangeslider> 
+             <br>
+            <input type="number" value="200" id="box_shard_key" min="1" max="512" >
+            </div>
+            <div id="radial_shard_key" class="right_radial_container" style="float:right"></div>
+            </div><hr>
 
             <div id="js-maxcoll-update-value" style="margin:0px auto; width:100%; height:200px;">
             <div class="left_slide" style="float:left; width:70%">
@@ -63,29 +75,21 @@
             </div>
             <hr>
 
-            <div id="js-shardkey-update-value" style="margin:0px auto; width:100%; height:200px;">
-            <div class="left_slide" style="float:left; width:70%">
-            <h3>Shard Key Size </h3>
-            <h4>Size in Bytes </h4>
-             <br>
-            <input type="range" min="8" max="512" value="200" id="slider_shard_key" data-rangeslider> 
-             <br>
-            <input type="number" value="200" id="box_shard_key" min="1" max="512" >
-            </div>
-            <div id="radial_shard_key" class="right_radial_container" style="float:right"></div>
-            </div><hr>
-
             <div id="js-chunksize-update-value" style="margin:0px auto; width:100%; height:200px;">
             <div class="left_slide" style="float:left; width:70%">
             <h3>Chunk Size </h3>
             <h4>Size in MBytes</h4> 
              <br>
             <input type="range" min="16" max="1000" step="2" value="64" id="slider_chunk_size" data-rangeslider> 
-             <br>
+            <br>
             <input type="number" value="64" id="box_chunk_size" min="1" max="1000">
             </div>
             <div id="radial_chunk_size" class="right_radial_container" style="float:right"></div>
             </div><hr>
+            <div>
+                <h3>To calculate shard key size:  </h3>
+                <h4>Object.bsonsize( { k1:'value', k2:'value' } )</h4>
+            </div><br>
             <div>
                 <h3>Estimation formula: </h3>
                 <h4>Split Points = Maximum BSON Document Size / Shard Key Size </h4>
@@ -214,7 +218,7 @@
                     updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
                 });
                 $('#box_max_coll').on('input', function() { 
-                    $('#slider_max_coll').val($('#boxmax_coll').val()).rangeslider('update', true); 
+                    $('#slider_max_coll').val($('#box_max_coll').val()).rangeslider('update', true); 
                     changeChunkSize($('#box_shard_key').val(), $('#box_max_coll').val());
                     updateChart($('#box_shard_key').val(), $('#box_chunk_size').val(), $('#box_max_coll').val());
                 });
