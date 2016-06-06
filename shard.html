@@ -119,9 +119,6 @@
                 }
                 function calculateChunkSize(shard_key, max_coll){
                     var new_chunk_size = Math.round(2 * max_coll * GIGA / maximumNumberOfChunks(shard_key));
-                    console.log('max coll: '+max_coll);
-                    console.log('max chunks: ' + maximumNumberOfChunks(shard_key));
-                    console.log('new chunk size: '+new_chunk_size);
                     return Math.min(1000, Math.round(new_chunk_size/MEGA));
                 }
                 function updateChart(shard_key, chunk_size, max_coll){
