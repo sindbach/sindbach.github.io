@@ -119,7 +119,7 @@
                 }
                 function calculateChunkSize(shard_key, max_coll){
                     var new_chunk_size = Math.round(2 * max_coll * GIGA / maximumNumberOfChunks(shard_key));
-                    return Math.min(1000, Math.round(new_chunk_size/MEGA));
+                    return Math.round(new_chunk_size/MEGA);
                 }
                 function updateChart(shard_key, chunk_size, max_coll){
                     VIZ_MAXCOLL.data(max_coll/1000).update();
@@ -132,6 +132,11 @@
                 }
                 function changeChunkSize(shard_key, max_coll){
                     var new_chunk_size = calculateChunkSize(shard_key, max_coll);
+                    if (new_chunk_size>= 1000){
+                        new_chunk_size = 1000;
+                        var new_shard_key =  Math.round((new_chunk_size*MEGA) * DOC_SIZE/ (2 * max_coll * GIGA));
+                        updateSliderAndBox("shard_key", new_shard_key);
+                    }
                     updateSliderAndBox("chunk_size", new_chunk_size);
                 }
 
