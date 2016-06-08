@@ -21,7 +21,7 @@
     <script> 
         var MEGA = 1000000;
         var GIGA = 1000000000;
-        var DOC_SIZE = 16 * MEGA;
+        var DOC_SIZE = 16 * 1024 * 1024;
         var SCALE_MAXCOLL = 1;
         var SCALE_CHUNKSIZE = 15;
         var SCALE_SHARDKEY = 30;
@@ -87,14 +87,9 @@
             <div id="radial_chunk_size" class="right_radial_container" style="float:right"></div>
             </div><hr>
             <div>
-                <h3>To calculate shard key size:  </h3>
-                <h4>Object.bsonsize( { k1:'value', k2:'value' } )</h4>
-            </div><br>
-            <div>
                 <h3>Estimation formula: </h3>
                 <h4>Split Points = Maximum BSON Document Size / Shard Key Size </h4>
-                <h4>Max Splits = MIN(1000000, Split Points)</h4> 
-                <h4>Maximum (Existing) Collection Size = Max Splits * Chunk Size / 2 </h4>
+                <h4>Maximum (Existing) Collection Size = Splits Points * Chunk Size / 2 </h4>
             </div>
             <hr><br>
             <div id="highcharts3d" style="height: 400px"></div>
