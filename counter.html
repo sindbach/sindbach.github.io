@@ -1,0 +1,55 @@
+<html>
+    <head>
+        <title>Counter</title>
+        <script src="https://s3.amazonaws.com/stitch-sdks/js/bundles/4.0.8/stitch.js"></script>
+        <script>
+            function getJsonFromUrl(hashBased) {
+            var query;
+            var pos = location.href.indexOf("?");
+            if(pos==-1) return [];
+            query = location.href.substr(pos+1);
+            var result = {};
+            query.split("&").forEach(function(part) {
+                if(!part) return;
+                part = part.split("+").join(" ");
+                var eq = part.indexOf("=");
+                var key = eq>-1 ? part.substr(0,eq) : part;
+                var val = eq>-1 ? decodeURIComponent(part.substr(eq+1)) : "";
+                var from = key.indexOf("[");
+                if(from==-1) result[decodeURIComponent(key)] = val;
+                else {
+                var to = key.indexOf("]",from);
+                var index = decodeURIComponent(key.substring(from+1,to));
+                key = decodeURIComponent(key.substring(0,from));
+                if(!result[key]) result[key] = [];
+                if(!index) result[key].push(val);
+                else result[key][index] = val;
+                }
+            });
+            return result;
+            }
+            function redir() {
+                /*This is a counter page. It only collects the page referrer and the destination, nothing else*/
+                var loc = window.location.toString();
+                var obj = getJsonFromUrl(loc);
+                
+                const client = stitch.Stitch.initializeDefaultAppClient('counter-sbaah');
+                client.auth.loginWithCredential(new stitch.AnonymousCredential())
+                            .then(() => {
+                                const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('analytics');
+                                db.collection('events').insertOne({
+                                    "to": obj["t"], 
+                                    "fr": obj["f"],
+                                    "tm": new Date(),
+                                })
+                }).then(()=>{
+                    window.location.replace(obj["t"]);
+                }).catch(err => {
+                    window.location.replace(obj["t"]);
+                });
+            };
+        </script>
+    </head>
+    <body onload="redir();">
+    </body>
+</html>
