@@ -32,19 +32,20 @@
                 var loc = window.location.toString();
                 var obj = getJsonFromUrl(loc);
                 const client = stitch.Stitch.initializeDefaultAppClient('counter-sbaah');
+                const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('analytics');
+
                 client.auth.loginWithCredential(new stitch.AnonymousCredential())
                 .then(() => {
-                    console.log("Here"); 
-                    const db = client.getServiceClient(stitch.RemoteMongoClient.factory, 'mongodb-atlas').db('analytics');
                     db.collection('events').insertOne({
                         "to": obj["t"], 
                         "fr": obj["f"],
                         "tm": new Date(),
+                    }).then(()=>{
+                        window.location.replace(obj["t"])
                     });
-                    window.location.replace(obj["t"]);
                 }).catch(err => {
                     console.log("error", err);
-                    window.location.replace(obj["t"]);
+                    window.location.replace(obj["t"])
                 });
             };
         </script>
